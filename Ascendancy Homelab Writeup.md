@@ -1,0 +1,173 @@
+## Overview
+
+Ascendancy, named after the Chiss Ascendancy from Star Wars, is my first homelab.
+## Table of Contents
+1. [Hardware](##Hardware)
+2. [Hosts](##Hosts)
+3. [Software](##Software)
+4. [Networking](##Networking)
+5. [Q&A](##Q&A)
+## Hardware
+Starting with two old ThinkPad T480s and a small Tp-Link switch, I converted my old Thermaltake Core V1 mini ITX case into a makeshift rack. I used two long screws to prop up the side panels inside the case. The bottom of the laptops are removed for airflow, and because I thought it looked cooler.
+
+![[IMG_6345 1.jpeg | 400]]
+
+A few months after starting this journey, I decided to purchase a real mini rack. I opted for the DeskPi RackMate T2. It is a 10" 12U mini rack, and while I don't have enough equipment to fill it, I like having the option to expand in the future.
+
+Shortly after purchasing the new rack, I picked up a HP Z2 Mini G4, bringing my total homelab machines to 3. The motherboards for the two laptops were removed from their chassis to fit in a 0.5U shelf. Having them naked isn't ideal, but the alternative is cutting off some of the plastic from the laptop chassis, which I also tried. The large machine on the bottom is my gaming computer. Part of the reason I opted for the 12U case was to fit my PC in the bottom, reducing the footprint of computers on my desk.
+
+![[IMG_7755.jpeg | 400]]
+
+For completeness, here is a list of equipment in my rack, from top to bottom.
+- Rack: DeskPi RackMate T2
+- Switch: TP-Link TL-SG108E
+- Blank Panel
+- 10" 0.5U Cat6 Patch Panel
+	- 0.1m Ubiquiti patch cables
+- Grated Panel in front of 1U shelf, used to hold power supplies
+- 2 ThinkPad T480s motherboards on a 0.5U shelf
+- 4 Port 10" PDU (on the back)
+- HP Z2 Mini G4
+- Blank Panel
+- Gaming PC, in a Silverstone SUGO 16
+
+POP MART DIMOO figures on top for decoration.
+
+## Hosts
+![[Screenshot.png]]
+
+Hosts are named based on planets/ships from Star Wars. Specifically, they all have to do with the Chiss Ascendancy, or Thrawn. Most come from the recent Ascendancy trilogy, and one from the Legends.  
+### Proxmox Hosts
+
+**Parala**
+Specs: HP Z2 Mini G4, i7-8700, 16GB DDR4, 1TB SSD.
+Name: A ship commanded by at the time Senior Captain Irizi'ar'alani. Delivered Thrawn to his exile.
+
+**Springhawk**
+Specs: ThinkPad T840s, i7-8650U, 16GB DDR4, 512GB SSD.
+Name: Heavy cruiser of Senior Captain Mitth'raw'nuruodo throughout the Ascendancy Trilogy, and in Legends.
+
+**Vigilant**
+Specs: ThinkPad T840s, i7-8650U, 16GB DDR4, 512GB SSD.
+Name: Admiral Ar'alani's Nightdragon man-of-war. Flagship of the CEDF's Picket Force Six.
+### VMs
+Note - For those unfamiliar with Proxmox, VMs on the same host can share CPU threads. While Csilla and Avidich both have access to 12 threads on the same host, it's the same 12 threads. Neither should ever hit even close to 100% utilization, so sharing them shouldn't be an issue.
+
+**Grayshrike**
+Specs: 1 CPU threads, 512 MB memory, 3.8 GB disk
+Function: Wireguard VPN
+Name: A Chiss heavy cruiser.
+
+**Csilla**
+Specs: 12 CPU threads, 6 GB memory, 32 GB disk
+Function: Wazuh + containers
+Name: The icy home planet of the chiss.
+
+**Avidich**
+Specs: 12 CPU threads, 7.8 GB memory, 800 GB disk
+Function: Jellyfin
+Name: Where Thrawn met Thrass and was matched to the Mitth.
+
+**Nirauan**
+Specs: 4 CPU threads, 2 GB memory, 20 GB disk
+Function: Ansible management node
+Name: In legends, the planet which hosts the military base known as "The Hand of Thrawn"
+
+**Sunrise**
+Specs: 6 CPU threads, 7.8 GB memory, 32 GB disk
+Function: Kali
+Name: A war torn planet from the Thrawn Ascendancy Series.
+
+**Orisson**
+Specs: 1 CPU threads, 512 MB memory, 3.86 GB disk
+Function: Backup Wireguard VPN
+Name: Clarr light cruiser.
+
+**Naporar**
+Specs: 8 CPU threads, 8.8 GB memory, 100 GB disk
+Function: Minecraft server(s)
+Name: Planet hosting the headquarters of the CEDF.
+## Software
+Programs/services I leverage in my homelab.
+
+**Proxmox**
+Proxmox is a virtualization software similar to VMware that allows the creation and management of virtual machines (VMs) and Linux containers (LXCs). It's similar to Oracle's VirtualBox, except Proxmox is its own operating system based on Debian. Proxmox supports high availability, but I do not leverage it because I didn't start by creating a ZFS pool. I don't feel like starting from scratch.
+
+My Proxmox hosts run in a cluster, which for Proxmox means all nodes can be managed from each other. I can log into any of them, and control the rest of them. Being able to control all hosts from one web interface is quite useful. I heavily utilize Proxmox's firewall, which will be discussed in the network section.
+
+**Wireguard**
+Easy to set up VPN for remote access to my homelab. Each device that needs to connect has its own profile so access can be easily revoked.
+
+**Podman**
+Podman is a container application, like Docker. Being able to quickly spin up programs that will run the same on any system is the main draw, along with their low resource requirements compared to VMs. Containers provide a level of abstraction that makes it easy for me to migrate data between VMs, in addition to backing up and restoring data. Docker seems to be more popular, but my understanding is that containers run by default with root access. I didn't like this, so I decided to experiment with Podman instead. I don't have to dance around giving it root access, it doesn't need it. Podman is also compatible with a lot of Docker files and templates, which means in a lot of cases it is a drop-in replacement.
+
+Podman is used in my environment to host a Minecraft server. Using the template from [itzg](https://hub.docker.com/r/itzg/minecraft-server), I add my own options using Podman, such as the exposed port, memory limit, name, game directory, etc.
+
+```
+podman run -e EULA=TRUE -e MEMORY=[memory]G --memory=[memory]g -e SERVER_PORT=[server_port] -p 0.0.0.0:[server_port]:[server_port] -v /path/to/server_directory:/data:Z --name server_name -it docker.io/itzg/minecraft-server
+```
+
+Viewing the server's resource usage can be done using the `podman stats` command. Rebuilding the container or upgrading the game version using the same world is as easy as:
+1. Making a copy of the server's directory with a new name.
+2. Changing the file owners and group owners to the Podman agent (seems to always be a number like 10876 for me).
+3. Running the same Podman command used to create the server the first time, but using the updated name and path.
+
+Backing up the server is as easy as zipping the entire directory, and saving it in another location. The container would have to be created again, but all the data it needs would already be in that zip file.
+
+I also use Podman to host Jellyfin.
+
+**Jellyfin**
+Jellyfin is a media streaming software, like Netflix, but using your own media. Currently, my plan is to rip movies off of the countless DVDs I have so they can be watched from any device, at any time. My Jellyfin runs in a Podman container, and the media vault is currently on the same disk. However, the media is read-only to the container. That way backing up the Jellyfin config is easy, and not much is lost even if the config is deleted. Jellyfin collections show/movie metadata very quickly.
+
+**Wazuh**
+An open source SIEM and XDR. Installed on all hosts, it has a very small footprint on client machines, and saves logs in an easy to read manner. Wazuh directly integrates security benchmarks, which I plan to utilize.
+
+**SSH**
+A ubiquitous remote access terminal application. It is present on all my hosts and VMs to easily interact with them. To remediate the vulnerability of password brute forcing, password authentication is disabled for all SSH servers. Instead, I have generated a public and private key pair for each server. On each server, the client's public key is stored in the authorized keys files. The client has all private keys, which are password protected. To successfully SSH into a remote host, the client must have the server's public key (something you have), and the private key's password (something you know).
+
+My SSH config on my client includes the path to each server's private key, so I can simply type `ssh [host]` to be prompted for the password.
+
+```
+Host [host_name]
+    HostName [ip]
+    User [user]
+    IdentityFile path/to/private/key
+```
+
+**Ansible**
+Ansible, an automation tool, leverages SSH to remote into servers and execute commands, then report results back to the control node. Due to my SSH configuration, new SSH public and private keys were generated for each host. In the inventory file, I have to point each host to its specific SSH private key. Then, to load the password for the private key:
+```
+eval "$(ssh-agent -s)"
+ssh-add path/to/key
+[enter password]
+```
+By using the code above, the password for each private key will stay loaded in memory until you log out of the Ansible control node.
+
+For actions on remote hosts that require sudo privileges, I use an Ansible vault. `ansible-vault` is a utility that creates an encrypted file in which remote hosts sudo passwords can be stored. These sudo passwords can be used with the `--ask-vault-pass` option, then entering the password for the vault.
+
+Right now Ansible is only used to upgrade packages, so I don't have to login and update each one individually.
+## Networking
+
+In addition to the built in firewall features of my ISP provided router, I utilize the Proxmox firewall. Set up as an implicit deny, I created groups with specific rules for each application. For example, all hosts are in the group that allow SSH access and Wazuh agent reporting, while host Naporar has it's own rule to make the Minecraft server accessible.
+
+The DNS on my ISP provided router has been configured so I can ping machines using their hostname rather than their IP. Since the hosts have high uptime, they typically renew the same DHCP leases, so reservations have not been necessary so far. When I purchase a router to create a double NAT setup, I will manually assign IPs in 10.0.0.0/8 range rather than relying on the single 192.168.1.0/24 subnet my current router supports.
+
+My Windows gaming computer is on a separate VLAN from the rest of my homelab because I don't trust Microsoft. This is done using my TP-Link managed switch.
+
+## Q&A
+Q: What's next for the homelab?
+A:
+1. Upload notes/documentation.
+2. Build/purchase a router to put all homelab equipment behind.
+3. Build/purchase a NAS.
+4. Change the Minecraft server from Vanilla to Fabric or Spigot, for better performance.
+5. Create and test specific XDR rules for Wazuh.
+6. Follow an enterprise hardening framework such as ISO 27001.
+
+Q: Why so many hosts?
+A: I expect to make breaking changes to my systems. By scaling horizontally rather than vertically, I am hopefully reducing the impact of bad configurations. Practicing restoring data from backups and troubleshooting Linux is a goal of creating this homelab in the first place. Two Proxmox hosts are also laptop motherboards resting on a shelf. Sometimes I feel like looking at them the wrong way will cause them to stop working.
+
+Q: Why publish this?
+A: Obscurity does not equal security. The benefit of sharing this information for educational purposes outweighs the risk. Using appropriate security controls, up to date systems, and (ironically) minimal obscurity, I believe the main risk to my infrastructure is a zero-day vulnerability.
+
+By authoring this, I force myself to document many aspects of my homelab. This may be useful for me when troubleshooting, or to plan future projects. Others may also learn from my mistakes, or utilize this as a comparison for other homelabs. If not for the people on r/homelab and the countless YouTube videos, I would not have been able to assemble this. This writeup is partly my attempt to give back.
