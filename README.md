@@ -42,52 +42,52 @@ Hosts are named based on planets/ships from Star Wars. Specifically, they all ha
 ### Proxmox Hosts
 
 #### **Parala**
-Specs: HP Z2 Mini G4, i7-8700, 16GB DDR4, 1TB SSD.
+Specs: HP Z2 Mini G4, i7-8700, 16GB DDR4, 1TB SSD. \
 Name: A ship commanded by at the time Senior Captain Irizi'ar'alani. Delivered Thrawn to his exile.
 
 #### **Springhawk**
-Specs: ThinkPad T840s, i7-8650U, 16GB DDR4, 512GB SSD.
+Specs: ThinkPad T840s, i7-8650U, 16GB DDR4, 512GB SSD. \
 Name: Heavy cruiser of Senior Captain Mitth'raw'nuruodo throughout the Ascendancy Trilogy, and in Legends.
 
 #### **Vigilant**
-Specs: ThinkPad T840s, i7-8650U, 16GB DDR4, 512GB SSD.
+Specs: ThinkPad T840s, i7-8650U, 16GB DDR4, 512GB SSD. \
 Name: Admiral Ar'alani's Nightdragon man-of-war. Flagship of the CEDF's Picket Force Six.
 ### VMs
 Note - For those unfamiliar with Proxmox, VMs on the same host can share CPU threads. While Csilla and Avidich both have access to 12 threads on the same host, it's the same 12 threads. Neither should ever hit even close to 100% utilization, so sharing them shouldn't be an issue.
 
 #### **Grayshrike**
-Specs: 1 CPU threads, 512 MB memory, 3.8 GB disk
-Function: Wireguard VPN
+Specs: 1 CPU threads, 512 MB memory, 3.8 GB disk \
+Function: Wireguard VPN \
 Name: A Chiss heavy cruiser.
 
 #### **Csilla**
-Specs: 12 CPU threads, 6 GB memory, 32 GB disk
-Function: Wazuh + containers
+Specs: 12 CPU threads, 6 GB memory, 32 GB disk \
+Function: Wazuh + containers \
 Name: The icy home planet of the chiss.
 
 #### **Avidich**
-Specs: 12 CPU threads, 7.8 GB memory, 800 GB disk
-Function: Jellyfin
+Specs: 12 CPU threads, 7.8 GB memory, 800 GB disk \
+Function: Jellyfin \
 Name: Where Thrawn met Thrass and was matched to the Mitth.
 
 #### **Nirauan**
-Specs: 4 CPU threads, 2 GB memory, 20 GB disk
-Function: Ansible management node
+Specs: 4 CPU threads, 2 GB memory, 20 GB disk \
+Function: Ansible management node \
 Name: In legends, the planet which hosts the military base known as "The Hand of Thrawn"
 
 #### **Sunrise**
-Specs: 6 CPU threads, 7.8 GB memory, 32 GB disk
-Function: Kali
+Specs: 6 CPU threads, 7.8 GB memory, 32 GB disk \
+Function: Kali \
 Name: A war torn planet from the Thrawn Ascendancy Series.
 
 #### **Orisson**
-Specs: 1 CPU threads, 512 MB memory, 3.86 GB disk
-Function: Backup Wireguard VPN
+Specs: 1 CPU threads, 512 MB memory, 3.86 GB disk \
+Function: Backup Wireguard VPN \
 Name: Clarr light cruiser.
 
 #### **Naporar**
-Specs: 8 CPU threads, 8.8 GB memory, 100 GB disk
-Function: Minecraft server(s)
+Specs: 8 CPU threads, 8.8 GB memory, 100 GB disk \
+Function: Minecraft server(s) \
 Name: Planet hosting the headquarters of the CEDF.
 ## Software
 Programs/services I leverage in my homelab.
